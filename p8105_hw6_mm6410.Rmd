@@ -32,7 +32,10 @@ weather_df =
   bootstrap(5000) |> 
   mutate(
     models = map(strap, \(df) lm(tmax ~ tmin, data = df)),
-    results = map(models, broom::tidy),
+    log_beta = map_dbl(models, ~ {
+      coefs = broom::tidy(.x)
+      log(coefs$estimate[1] * coefs$estimate[2])
+    }),
     glance = map(models, broom::glance)
   )
 ```
@@ -55,4 +58,13 @@ weather_df |>
   mean()
 ```
 
-We can see from the density plot of the R-squared estimates that it is normally distributed. The mean of the R-squared estimates is 0.911.
+We can see from the density plot of the R-squared estimates that it is normally distributed. The mean of the R-squared estimates is 0.911. 
+
+### Plotting the log($\hat{\beta}_{0}$ * $\hat{\beta}_{1}$)
+
+```{r}
+weather_df |> 
+  ggplot(aes(x = log_beta)) +
+  geom_density()
+```
+
