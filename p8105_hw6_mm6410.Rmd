@@ -37,3 +37,22 @@ weather_df =
   )
 ```
 
+### Plotting the R-Squared Distribution
+
+```{r}
+weather_df |> 
+  select(strap, .id, glance) |> 
+  unnest(glance) |> 
+  select(.id, r.squared) |> 
+  ggplot(aes(x = r.squared)) +
+  geom_density()
+
+weather_df |> 
+  select(strap, .id, glance) |> 
+  unnest(glance) |> 
+  select(.id, r.squared) |> 
+  pull(r.squared) |> 
+  mean()
+```
+
+We can see from the density plot of the R-squared estimates that it is normally distributed. The mean of the R-squared estimates is 0.911.
