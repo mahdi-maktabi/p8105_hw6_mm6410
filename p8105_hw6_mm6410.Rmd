@@ -98,4 +98,22 @@ The 95% CI for the r-squared and log of the estimated intercept * slope:
 * r-squared: (0.894, 0.928)
 * log($\hat{\beta}_{0}$ * $\hat{\beta}_{1}$): (1.97, 2.06)
 
+## Problem 2
+
+```{r}
+homicide_df = read_csv(file = "./data/homicide-data.csv", na = c("NA", "", NA))
+```
+
+```{r}
+homicide_df =
+  homicide_df |> 
+  mutate(
+    city_state = str_c(city, state, sep = ", "),
+    solved = if_else(disposition == "Closed by arrest", 1, 0),
+    victim_age = as.numeric(victim_age)) |> 
+  filter(
+    !city_state %in% c("Dallas, TX", "Phoenix, AZ", "Kansas City, MO", "Tulsa, AL"),
+    victim_race %in% c("White", "Black")
+  )
+```
 
