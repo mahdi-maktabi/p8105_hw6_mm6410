@@ -168,3 +168,31 @@ This plot shows the estimated odds of solved homicides for male victims compared
 
 For the 95% CI, there are many cities that do not include the null value of 1 (generally the lower ORs). There are also many cities where the 95% CI have a very wide range and include the null value of 1. For these cities, the estimated OR that is seen might not be valid as this value could have been produced due to random chance. 
 
+## Problem 3
+
+```{r}
+birthweight_df = 
+  read_csv(file = "./data/birthweight.csv",
+           na = c("NA", "", ".")) |> 
+  janitor::clean_names() |> 
+  mutate(
+    babysex = factor(babysex, levels = c(1, 2), labels = c("Male", "Female")),
+    frace = case_match(frace,
+      1 ~ "White",
+      2 ~ "Black",
+      3 ~ "Asian",
+      4 ~ "Puerto Rican",
+      8 ~ "Other"),
+    frace = fct_infreq(frace),
+    mrace = case_match(mrace,
+      1 ~ "White",
+      2 ~ "Black",
+      3 ~ "Asian",
+      4 ~ "Puerto Rican",
+      8 ~ "Other"),
+    mrace = fct_infreq(mrace),
+    malform = factor(malform, levels=c(0,1), labels=c("Absent", "Present"))
+    )
+```
+
+
