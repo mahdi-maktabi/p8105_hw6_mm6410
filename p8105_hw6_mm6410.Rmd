@@ -58,7 +58,7 @@ weather_df |>
   mean()
 ```
 
-We can see from the density plot of the R-squared estimates that it is normally distributed. The mean of the R-squared estimates is 0.911. 
+We can see from the density plot of the R-squared estimates that it is approximately normally distributed. The mean of the R-squared estimates is 0.911. 
 
 ### Plotting the log($\hat{\beta}_{0}$ * $\hat{\beta}_{1}$)
 
@@ -66,5 +66,36 @@ We can see from the density plot of the R-squared estimates that it is normally 
 weather_df |> 
   ggplot(aes(x = log_beta)) +
   geom_density()
+
+weather_df |> 
+  pull(log_beta) |> 
+  mean()
 ```
+
+Similarly, we can see from the density plot of the log($\hat{\beta}_{0}$ * $\hat{\beta}_{1}$) estimates that it is also approximately normally distributed with a mean of 2.013.
+
+### Finding the 2.5% and 97.5% quantiles
+
+```{r}
+weather_df |> 
+  select(strap, .id, glance) |> 
+  unnest(glance) |> 
+  select(.id, r.squared) |> 
+  summarize(
+    ci_low = quantile(r.squared, 0.025),
+    ci_up = quantile(r.squared, 0.975)
+  )
+
+weather_df |> 
+  summarize(
+    ci_low = quantile(log_beta, 0.025),
+    ci_up = quantile(log_beta, 0.975)
+  )
+```
+
+The 95% CI for the r-squared and log of the estimated intercept * slope:
+
+* r-squared: (0.894, 0.928)
+* log($\hat{\beta}_{0}$ * $\hat{\beta}_{1}$): (1.97, 2.06)
+
 
