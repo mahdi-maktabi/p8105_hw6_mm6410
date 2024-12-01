@@ -1,0 +1,14 @@
+---
+title: "p8105_hw6_mm6410"
+author: "Mahdi Maktabi"
+date: "2024-12-01"
+output: github_document
+---
+
+```{r, message=FALSE}
+library(tidyverse)
+```
+
+## Problem 1
+
+
