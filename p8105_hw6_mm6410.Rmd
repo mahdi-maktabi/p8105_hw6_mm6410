@@ -196,3 +196,101 @@ birthweight_df =
 ```
 
 
+Doing some exploratory analysis of different variables:
+
+```{r}
+birthweight_df |> 
+  ggplot(aes(x = gaweeks, y = bwt)) +
+  geom_point(alpha = 0.5)
+
+# generally, as GA increases, birthweight increases and then clusters around 40 weeks.
+
+birthweight_df |> 
+  ggplot(aes(x = ppbmi, y = bwt)) +
+  geom_point()
+
+birthweight_df |> 
+  ggplot(aes(x = smoken, y = bwt)) +
+  geom_point()
+
+birthweight_df |> count(smoken) # there were quite a number of people who smoked during pregnancy in this dataset
+
+```
+
+Based on my exploratory analysis, I chose to create a model using:
+
+* outcome: birthweight
+* Predictor variables: gestational age (`gaweeks`), mother's pre-pregnancy BMI (`ppbmi`), mother's age at delivery (`momage`), and the average number of cigarettes smoked per day during pregnancy. 
+* I chose these predictors as they all may directly influence a baby's birthweight. 
+
+```{r}
+bwt_model =
+  birthweight_df |> 
+    lm(bwt ~ gaweeks + ppbmi + momage + smoken, data = _)
+
+bwt_model |> 
+  broom::tidy() |> 
+  knitr::kable(digits = 3)
+```
+
+```{r}
+birthweight_df = 
+  birthweight_df |> 
+  add_predictions(bwt_model) |>  
+  add_residuals(bwt_model)
+
+ggplot(birthweight_df, aes(x = pred, y = resid)) + 
+  geom_point(alpha = 0.5) + 
+  geom_smooth(method = "lm", se = FALSE, color = "red")
+
+```
+
+When plotting the residuals vs predicted values, we see that there is a cluster around 3200. This could mean that I am missing variables from my model. 
+
+```{r}
+bwt_model_cv =
+  crossv_mc(birthweight_df, 200) |> 
+  mutate(
+    train = map(train, as_tibble),
+    test = map(test, as_tibble)
+  )
+
+bwt_model_cv =
+  bwt_model_cv |> 
+    mutate(
+      main_effects = map(train, \(df) lm(bwt ~ gaweeks + blength, data = df)),
+      model_interaction = map(train, \(df) lm(bwt ~ bhead * blength * babysex, data = df)),
+      my_model = map(train, \(df) lm(bwt ~ gaweeks + ppbmi + smoken, data = df))
+    ) |> 
+  mutate(
+    rmse_main_effects = map2_dbl(main_effects, test, \(mod, df) rmse(model = mod, data = df)),
+    rmse_interactions = map2_dbl(model_interaction, test, \(mod, df) rmse(model = mod, data = df)),
+    rmse_my_model = map2_dbl(my_model, test, \(mod, df) rmse(model = mod, data = df)))
+```
+
+```{r}
+bwt_model_cv |> 
+  select(starts_with("rmse")) |> 
+  pivot_longer(
+    everything(),
+    names_to = "model", 
+    values_to = "rmse",
+    names_prefix = "rmse_"
+  ) |> 
+  mutate(model = fct_inorder(model)) |> 
+  ggplot(aes(x = model, y = rmse, fill = model)) + 
+  geom_violin(trim = FALSE, alpha = 0.7) +
+  geom_boxplot(width = 0.1, outlier.shape = NA, alpha = 0.5) +
+  labs(
+    title = "Comparison of RMSE Across Models",
+    x = "Model",
+    y = "RMSE"
+  ) +
+  theme_minimal() +
+  theme(
+    legend.position = "none",
+    axis.text.x = element_text(angle = 45, hjust = 1)
+  )
+```
+
+Comparing the RMSE across all models, my model has a much higher root mean square errors. The reason for this might be that the predictors I chose to include in the model might not as directly related to birthweight compared to the other models leading to a higher prediction error. For example, the model with head circumference, length, sex, and all interactions between these 3 predictors had the lowest RMSE. These predictors are all generally related to one another in some way and would be closely related to the baby's birthweight.
